@@ -213,9 +213,20 @@
          Number
          (class b)))])
 
-(defmulti
-  #^{:doc "Add two numbers, matrices, etc."}
-  plus dispatcher)
+(with-test
+    (defmulti
+      #^{:doc "Add two numbers, matrices, etc."}
+      plus dispatcher)
+  (is (= (cvec 4 6)
+         (plus (cvec 1 2) (cvec 3 4))))
+  (is (= (matr 2 2 [1 3 5 7])
+         (plus (matr 2 2 (range 4))
+               (matr 2 2 (range 1 5)))))
+  (is (= (matr 2 2 (range 1 5))
+         (plus 1 (matr 2 2 (range 4)))))
+  (is (= (matr 2 2 (range 1 5))
+         (plus (matr 2 2 (range 4)) 1)))
+  (is (= 4 (plus 1 3))))
 
 (defmethod plus [::Matrix ::Matrix] [m1 m2]
   (assert (= (dim m1) (dim m2)))
