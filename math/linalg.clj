@@ -203,6 +203,20 @@
       [m j] (gen-matrix (:rows m) 1
                         (fn [i _] (mget m i j)))))
 
+(defn rows
+  "Returns a seq of the row vectors of the matrix"
+  [m] (map (partial apply rvec)
+           (partition (:cols m) (:data m))))
+
+(defn cols
+  "Returns a seq of the column vectors of the matrix"
+  [m] (map (partial apply cvec)
+           (partition (:rows m)
+                      (apply interleave
+                             (partition (:cols m) (:data m))))))
+
+;;; MATRIX ARITHMETIC
+
 (defn- dispatcher [a b]
   [(or (:type a)
        (if (= clojure.lang.Ratio (class a))
