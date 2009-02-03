@@ -323,6 +323,8 @@
   ([x & more]
      (reduce times x more)))
 
+;;; DETERMINANT OF A MATRIX
+
 (defmulti
   #^{:doc "Take the determinant of a matrix."}
   det (fn [m]
@@ -356,9 +358,13 @@
   [m n]
   (gen-matrix m n (constantly 0)))
 
+;;; LINEAR TRANSFORMATIONS
+
 (defn print-xform
   ([o] (print-xform o *out*) (prn))
-  ([o w] (.write w (str (pr-str (first (o))) " -> " (pr-str (second (o)))))))
+  ([o w] (.write w (str (pr-str (first (o)))
+                        " -> "
+                        (pr-str (second (o)))))))
 
 (defmacro xform
   "Create a linear transformation function."
@@ -394,6 +400,8 @@
   [xfm]
   (let [in-size (count (first (xfm)))]
     (join-cols (map xfm (std-basis in-size)))))
+
+;;; INVERSE OF A MATRIX
 
 (defn- remove-row-column
   "Returns a matrix that contains the same elements as another matrix
