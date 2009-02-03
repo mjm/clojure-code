@@ -539,7 +539,11 @@
   "Puts two matrices side-by-side in a new matrix."
   [m1 m2]
   (assert (= (:rows m1) (:rows m2)))
-  )
+  (gen-matrix (:rows m1)
+              (+ (:cols m1) (:cols m2))
+              #(if (> %2 (:cols m1))
+                 (mget m2 %1 (- %2 (:cols m1)))
+                 (mget m1 %1 %2))))
 
 ;;; PRINTING MATRICES AND VECTORS
 
