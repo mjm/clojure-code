@@ -437,6 +437,7 @@
   [m] (let [d (det m)]
         (if (not= 0 d) d nil)))
 
+;; this so doesn't work on 4x4 matrices or bigger
 (defn inverse
   "Finds the inverse of a matrix."
   [m]
@@ -484,21 +485,27 @@
 ;;; They don't handle zeros in the wrong places.
 ;;; They also will gladly divide by zero if given the chance.
 
-(defn lower-reduce-column
-  "Applies row operations to reduce the lower half of the matrix to
-  zeroes. Assumes that the previous columns have already been reduced."
-  [m c]
-  (let [mr (multiply-row m c (/ 1 (mget m c c)))]
+(defn reduce-col [m c done? next]
+  (let [mr (multiply-row m c
+                         (if (= 0 (mget m c c))
+                           1
+                           (/ 1 (mget m c c))))]
     (loop [acc mr
-           r (inc c)]
-      (if (> r (:rows m))
+           r (next c)]
+      (if (done? r)
         acc
         (recur
          (add-mult acc
                    (- (mget acc r c))
                    c
                    r)
-         (inc r))))))
+         (next r))))))
+
+(defn lower-reduce-column
+  "Applies row operations to reduce the lower half of the matrix to
+  zeroes. Assumes that the previous columns have already been reduced."
+  [m c]
+  (reduce-col m c #(> % (:rows m)) inc))
 
 (defn lower-reduce
   "Row-reduces a matrix so it is upper-triangular (reduce the lower half
@@ -512,16 +519,7 @@
   "Applies row operations to reduce the upper half of the matrix to
   zeroes. Assumes that subsequent columns have already been reduced."
   [m c]
-  (let [mr (multiply-row m c (/ 1 (mget m c c)))]
-    (loop [acc mr
-           r (dec c)]
-      (if (< r 1)
-        acc
-        (recur
-         (add-mult acc
-                   (- (mget acc r c))
-                   c r)
-         (dec r))))))
+  (reduce-col m c #(< % 1) dec))
 
 (defn upper-reduce
   "Row-reduces a matrix so it is lower-triangular (reduce the upper half
