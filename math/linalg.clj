@@ -613,6 +613,17 @@
           []
           (cols m)))
 
+(defn q-matrix [m]
+  (reduce augment (orthonormal-basis m)))
+
+(defn r-matrix [a q]
+  (mult (transpose q) a))
+
+(defn qr [a]
+  (let [q (q-matrix a)
+        r (r-matrix a q)]
+    [q r]))
+
 ;;; PRINTING MATRICES AND VECTORS
 
 (defmulti
