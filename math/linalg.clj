@@ -14,7 +14,7 @@
     (reduce * (replicate exp base))
     (Math/pow base exp)))
 
-(defn- close-enough? [n1 n2]
+(defn- =? [n1 n2]
   (< (abs (- n1 n2)) 0.000000001))
 
 ;;; FINDING SQUARE ROOTS
@@ -518,9 +518,14 @@
 ;;; They don't handle zeros in the wrong places.
 ;;; They also will gladly divide by zero if given the chance.
 
-(defn reduce-col [m c done? next]
+(defn- clean-for-reduction [m]
+  (if (=? (mget m 1 1) 0)
+    (swap-rows m 1 (max-key #(mget m % 1) (range 1 (inc (:rows m)))))
+    m))
+
+(defn- reduce-col [m c done? next]
   (let [mr (multiply-row m c
-                         (if (= 0 (mget m c c))
+                         (if (=? 0 (mget m c c))
                            1
                            (/ 1 (mget m c c))))]
     (loop [acc mr
@@ -534,7 +539,7 @@
                    r)
          (next r))))))
 
-(defn lower-reduce-column
+(defn- lower-reduce-column
   "Applies row operations to reduce the lower half of the matrix to
   zeroes. Assumes that the previous columns have already been reduced."
   [m c]
@@ -548,7 +553,7 @@
           m
           (range 1 (inc (min (:rows m) (:cols m))))))
 
-(defn upper-reduce-column
+(defn- upper-reduce-column
   "Applies row operations to reduce the upper half of the matrix to
   zeroes. Assumes that subsequent columns have already been reduced."
   [m c]
@@ -576,11 +581,14 @@
                  (mget m2 %1 (- %2 (:cols m1)))
                  (mget m1 %1 %2))))
 
+(defn solve [a b]
+  (let [sol (rref (augment a b))]
+    (col sol (:cols sol))))
+
 ;;; DEALING WITH BASES
 
 (defn in-basis [v bas]
-  (let [sol (rref (augment (join-cols bas) v))]
-    (col sol (:cols sol))))
+  (solve (join-cols bas) v))
 
 (defn change-basis [out in]
   (join-cols (map #(in-basis % out) in)))
@@ -592,21 +600,21 @@
 
 (defn norm [v]
   (let [mag (magnitude v)]
-    (if (close-enough? 0 mag)
+    (if (=? 0 mag)
       v
       (mult (/ (magnitude v)) v))))
 
 ;;; QR FACTORIZATION
 
 (defn zero-vec? [v]
-  (every? (partial close-enough? 0) (:data v)))
+  (every? (partial =? 0) (:data v)))
 
 (defn orthonormal-basis [m]
   (reduce (fn [vecs v]
             (let [u (norm
-                   (apply subt
-                          v
-                          (map #(mult (dot v %) %) vecs)))]
+                     (apply subt
+                            v
+                            (map #(mult (dot v %) %) vecs)))]
               (if (zero-vec? u)
                 vecs
                 (conj vecs u))))
@@ -623,6 +631,12 @@
   (let [q (q-matrix a)
         r (r-matrix a q)]
     [q r]))
+
+;;; LEAST SQUARES SOLUTION
+
+(defn ls-solve [a b]
+  (let [[q r] (qr a)]
+    (solve r (mult (transpose q) b))))
 
 ;;; PRINTING MATRICES AND VECTORS
 
