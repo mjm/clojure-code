@@ -598,15 +598,18 @@
 
 ;;; QR FACTORIZATION
 
+(defn zero-vec? [v]
+  (every? (partial close-enough? 0) (:data v)))
+
 (defn orthonormal-basis [m]
   (reduce (fn [vecs v]
-            (prn v)
-            (prn (magnitude (apply subt v (map #(mult (dot v %) %) vecs))))
-            (conj vecs
-                  (norm
+            (let [u (norm
                    (apply subt
                           v
-                          (map #(mult (dot v %) %) vecs)))))
+                          (map #(mult (dot v %) %) vecs)))]
+              (if (zero-vec? u)
+                vecs
+                (conj vecs u))))
           []
           (cols m)))
 
