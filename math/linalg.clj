@@ -1,6 +1,39 @@
 (ns math.linalg
   (:use clojure.contrib.test-is))
 
+;;; BASIC MATH FUNCTIONS
+;;; Not sure why clojure itself doesn't have these
+
+(defn abs [n] (if (< n 0) (- n) n))
+(defn avg [& nums]
+  (/ (reduce + nums)
+     (count nums)))
+
+(defn ** [base exp]
+  (if (integer? exp)
+    (reduce * (replicate exp base))
+    (Math/pow base exp)))
+
+(defn- close-enough? [n1 n2]
+  (< (abs (- n1 n2)) 0.000000001))
+
+;;; FINDING SQUARE ROOTS
+;;; Java sucks at it, floating point numbers are epic fail.
+
+(defn- is-valid? [guess n]
+  (< (abs (- (** guess 2) n))
+     0.000000001))
+
+(defn- improve [guess n]
+  (avg guess (/ n guess)))
+
+(defn sqrt [num]
+  (loop [guess 1
+         n num]
+    (if (is-valid? guess n)
+      guess
+      (recur (improve guess n) n))))
+
 ;;; Matrix has: width, height, data
 ;;; for simplicity store data as a single vector
 
@@ -542,6 +575,40 @@
               #(if (> %2 (:cols m1))
                  (mget m2 %1 (- %2 (:cols m1)))
                  (mget m1 %1 %2))))
+
+;;; DEALING WITH BASES
+
+(defn in-basis [v bas]
+  (let [sol (rref (augment (join-cols bas) v))]
+    (col sol (:cols sol))))
+
+(defn change-basis [out in]
+  (join-cols (map #(in-basis % out) in)))
+
+;;; NORMALIZING VECTORS
+
+(defn magnitude [v]
+  (Math/sqrt (reduce + (map #(* % %) (:data v)))))
+
+(defn norm [v]
+  (let [mag (magnitude v)]
+    (if (close-enough? 0 mag)
+      v
+      (mult (/ (magnitude v)) v))))
+
+;;; QR FACTORIZATION
+
+(defn orthonormal-basis [m]
+  (reduce (fn [vecs v]
+            (prn v)
+            (prn (magnitude (apply subt v (map #(mult (dot v %) %) vecs))))
+            (conj vecs
+                  (norm
+                   (apply subt
+                          v
+                          (map #(mult (dot v %) %) vecs)))))
+          []
+          (cols m)))
 
 ;;; PRINTING MATRICES AND VECTORS
 
