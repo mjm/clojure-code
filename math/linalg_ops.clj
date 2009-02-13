@@ -20,6 +20,8 @@
 ;;;   orthonormal-basis: Finds an orthonormal basis for the image
 ;;;   qr: QR factorization
 ;;;   ls-solve: Least-squares solution to Ax = b
+;;;   poly-regression: Polynomial regression of any degree
+;;;   linear-regression: Polynomial regression of degree 1
 
 (in-ns 'math.linalg)
 
@@ -37,7 +39,7 @@
 
 (with-test
     (defn dot
-      "Take the dot product of two vectors"
+      "Take the dot product of two vectors."
       [v1 v2]
       (assert (and (vec? v1) (vec? v2)))
       (assert (= (dim v1) (dim v2)))
@@ -55,9 +57,11 @@
   (is (= 10 (dot (cvec 3 2 1)
                  (cvec 1 2 3)))))
 
-(defn id
-  "Gives an identity matrix with n rows and n columns."
-  [n] (gen-matrix n n #(if (= %1 %2) 1 0)))
+(with-test
+    (defn id
+      "Gives an identity matrix with n rows and n columns."
+      [n] (gen-matrix n n #(if (= %1 %2) 1 0)))
+  (is (= (id 1) (matr 1 1 [1]))))
 
 (defn zero
   "Gives a matrix with m rows and n columns filled with zeroes."
