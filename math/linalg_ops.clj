@@ -61,16 +61,18 @@
     (defn id
       "Gives an identity matrix with n rows and n columns."
       [n] (gen-matrix n n #(if (= %1 %2) 1 0)))
-  (is (= (id 1) (matr 1 1 [1]))))
+  (is (= (id 1) (matr 1 1 [1])))
+  (is (= (id 2) (matr 2 2 [1 0 0 1])))
+  (is (= (id 3) (matr 3 3 [1 0 0 0 1 0 0 0 1]))))
 
 (defn zero
   "Gives a matrix with m rows and n columns filled with zeroes."
-  [m n]
-  (gen-matrix m n (constantly 0)))
+  ([m] (zero m m))
+  ([m n] (gen-matrix m n (constantly 0))))
 
-(defmulti
-  #^{:doc "Take the determinant of a matrix."}
-  det (fn [m]
+(defmulti det
+  "Take the determinant of a matrix."
+  (fn [m]
         (assert (square? m))
         (first (dim m))))
 

@@ -8,13 +8,27 @@
       "Create a matrix with dimensions and data.
   Any other matrix constructors should use this to make sure metadata
   is set correctly."
-      [rows cols data]
-      (with-meta (assoc (struct matrix rows cols (vec data)) :type ::Matrix)
-                 {:custom-print print-matrix}))
-  (let [m (matr 3 2 [1 2 3 4 5 6])]
-    (is (= 3 (:rows m)))
-    (is (= 2 (:cols m)))
-    (is (= [1 2 3 4 5 6] (:data m)))))
+      ([data]
+         (matr (count data)
+               (count (first data))
+               (apply concat data)))
+      ([dim data]
+         (matr dim dim data))
+      ([rows cols data]
+         (with-meta (assoc (struct matrix rows cols (vec data))
+                      :type ::Matrix)
+                    {:custom-print print-matrix})))
+  (let [m1 (matr 3 2 (range 1 7))
+        m2 (matr 2 [1 2 3 4])
+        m3 (matr [[1 2 3] [4 5 6]])]
+    (is (= 3 (:rows m1)))
+    (is (= 2 (:cols m1)))
+    (is (= [1 2 3 4 5 6] (:data m1)))
+    (is (= 2 (:rows m2) (:cols m2)))
+    (is (= [1 2 3 4] (:data m2)))
+    (is (= 2 (:rows m3)))
+    (is (= 3 (:cols m3)))
+    (is (= [1 2 3 4 5 6] (:data m3)))))
 
 (with-test
     (defn dim
@@ -79,7 +93,10 @@
   (is (not (rvec? (cvec 1 2 3)))))
 
 (with-test
-    (defn- flattened-index [m i j]
+    (defn- flattened-index
+      "Takes a row and column index and turns it into a single index
+  for the data vector of the matrix."
+      [m i j]
       (+ (dec j)
          (* (dec i) (:cols m))))
   (let [m (matr 3 4 (vec (range 12)))]
@@ -110,9 +127,11 @@
     (is (= 3 (mget (rvec 1 2 3) 3)))))
 
 (with-test
-    (defn- expanded-index [m i]
-      [(inc (int (Math/floor (/ i (:cols m)))))
-       (inc (rem i (:cols m)))])
+    (defn- expanded-index
+      "Takes an index for the data vector and turns it into a row and
+  column index for the matrix."
+      [m i] [(inc (int (Math/floor (/ i (:cols m)))))
+             (inc (rem i (:cols m)))])
   (let [m (matr 2 3 (range 6))]
     (is (= [1 1] (expanded-index m 0)))
     (is (= [1 2] (expanded-index m 1)))
