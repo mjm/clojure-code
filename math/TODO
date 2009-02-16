@@ -1,0 +1,3 @@
+Make a generic join-vecs function that will do either columns or rows
+Make functions to map along matrices and vectors (revamp for-matrix?)
+Figure out the basis of a kernel (used for eigenvectors)
