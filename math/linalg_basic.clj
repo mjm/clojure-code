@@ -1,10 +1,24 @@
 ;;; BASIC MATH FUNCTIONS
-;;; 
+;;;
 ;;; I'm not sure why clojure doesn't have stuff like this already.
 ;;; These make some of the other more complicated functions a lot
 ;;; easier to deal with.
 
 (in-ns 'math.linalg)
+
+(defn math-dispatch
+  "Used for multimethod dispatch when working on math data.
+  Basically makes it so that if we are working with Clojure data, we
+  get the :type field, and if we are working with Java data, we use
+  its class. The only exception is Ratio, which doesn't fit into
+  Java's numeric hierarchy. If any element is a Ratio, we return
+  Number so it is treated like others."
+  ([a] (or (:type a)
+           (if (= clojure.lang.Ratio (class a))
+             Number
+             (class a))))
+  ([a & args]
+     (vec (map math-dispatch (cons a args)))))
 
 ;; Wrote our own because Math/abs doesn't work with Ratios
 (defn abs

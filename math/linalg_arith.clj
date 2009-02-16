@@ -5,20 +5,10 @@
 
 (in-ns 'math.linalg)
 
-(defn- dispatcher [a b]
-  [(or (:type a)
-       (if (= clojure.lang.Ratio (class a))
-         Number
-         (class a)))
-   (or (:type b)
-       (if (= clojure.lang.Ratio (class b))
-         Number
-         (class b)))])
-
 (with-test
     (defmulti
       #^{:doc "Add two numbers, matrices, etc."}
-      plus dispatcher)
+      plus math-dispatch)
   (is (= (cvec 4 6)
          (plus (cvec 1 2) (cvec 3 4))))
   (is (= (matr 2 2 [1 3 5 7])
@@ -57,7 +47,7 @@
 
 (defmulti
   #^{:doc "Subtracts two numbers, matrices, etc."}
-  minus dispatcher)
+  minus math-dispatch)
 
 (defmethod minus [::Matrix ::Matrix] [m1 m2]
   (assert (= (dim m1) (dim m2)))
@@ -83,7 +73,7 @@
 
 (defmulti
   #^{:doc "Multiplies two numbers, matrices, etc."}
-  times dispatcher)
+  times math-dispatch)
 
 (def dot) ; This is defined in linalg_ops
 
