@@ -40,11 +40,26 @@
     (reduce * (replicate exp base))
     (Math/pow base exp)))
 
-(defn- =?
+(def #^{:private true}
+     close-enough-delta
+     0.000000001)
+
+(defmulti =?
   "Checks if two numbers are close enough to be considered equal. This
   is meant to avoid some problems with bad floating-point arithmetic."
-  [n1 n2]
-  (< (abs (- n1 n2)) 0.000000001))
+  math-dispatch)
+
+(defmethod =? [Number Number] [n1 n2]
+  (< (abs (- n1 n2)) close-enough-delta))
+
+(defmethod =? [Number ::Matrix] [n m]
+  (every? #(=? n %) (:data m)))
+
+(defmethod =? [::Matrix ::Matrix] [m1 m2]
+  (assert (= (dim m1) (dim m2)))
+  (every? #(=? ((:data m1) %)
+               ((:data m2) %))
+          (range (count (:data m1)))))
 
 ;; This shit is crappy! Real ugly results for what should be integers.
 ;; Idea: use =? to check if it really is close enough to a rounded
