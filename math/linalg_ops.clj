@@ -244,3 +244,33 @@
             (apply cvec (map second points))))
 
 (def linear-regression (partial poly-regression 1))
+
+(defn eigenvalues
+  "Finds a column vector of the eigenvalues of the matrix. Uses the QR
+  method."
+  [m]
+  (let [z? (=? 0 (det m))]
+    (loop [m m]
+      (let [[q r] (qr m)
+           m1 (mult r q)
+           d0 (diag m)
+           d1 (diag m1)]
+       (if (every? (fn [[a b]] (=? a b))
+                   (zipmap d0 d1))
+         (if z?
+           (apply cvec 0 d1)
+           (apply cvec d1))
+         (recur m1))))))
+
+(defn eigenvector
+  [m l]
+  ;; (kernel (subt m (mult l (id (:rows m)))))
+  )
+
+(defn eigenvectors
+  "Finds the eigenvectors that correspond to the given eigenvalues of
+  the matrix."
+  [m eigs]
+  (join-cols
+   (map #(eigenvector m %)
+        (:data eigs))))

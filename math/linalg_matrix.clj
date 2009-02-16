@@ -179,5 +179,12 @@
                       (apply interleave
                              (partition (:cols m) (:data m))))))
 
-(defn zero-vec? [v]
-  (every? (partial =? 0) (:data v)))
+(defn diag
+  "Returns a seq of the values along the diagonal of the matrix."
+  [m] (map #(mget m % %)
+           (range 1 (inc (min (:rows m)
+                              (:cols m))))))
+
+(defn zero-vec?
+  "Checks if a vector is the zero vector (every entry is zero)."
+  [v] (=? 0 v))
