@@ -88,3 +88,8 @@
         (cons (substitute (first exp) bindings)
               (substitute (rest exp) bindings))
         exp)))
+
+(defn translate-by-rules [exp rules actfn]
+  (some #(if-let [res (match (first %) exp)]
+           (actfn (second %) res))
+        rules))
