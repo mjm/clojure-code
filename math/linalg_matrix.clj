@@ -44,6 +44,15 @@
   (is (= 3 (dim (matr 3 1 [1 2 3]))))
   (is (= [3 4] (dim (matr 3 4 (range 12))))))
 
+(defmethod =? [Number ::Matrix] [n m]
+  (every? #(=? n %) (:data m)))
+
+(defmethod =? [::Matrix ::Matrix] [m1 m2]
+  (assert (= (dim m1) (dim m2)))
+  (every? #(=? ((:data m1) %)
+               ((:data m2) %))
+          (range (count (:data m1)))))
+
 (with-test
     (defn cvec
       "Creates a column vector with the data.

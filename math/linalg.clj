@@ -1,7 +1,7 @@
 (ns math.linalg
-  (:use clojure.contrib.test-is))
+  (:use math
+        clojure.contrib.test-is))
 
-(load "linalg_basic")                   ; Basic math functions
 (load "linalg_matrix")                  ; Matrix and vector definition
 (load "linalg_arith")                   ; Matrix arithmetic
 (load "linalg_rowred")                  ; Row-reduction
