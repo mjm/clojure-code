@@ -15,6 +15,10 @@
   (and (symbol? x)
        (.startsWith (name x) "?")))
 
+(defmacro with-vars [vars & body]
+  `(binding [variable? (fn [x#] (some #{x#} '~vars))]
+     ~@body))
+
 (defn match-is [[var pred] in bindings]
   (let [new-bindings (match var in bindings)]
     (if (or (= new-bindings fail)
