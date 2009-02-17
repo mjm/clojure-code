@@ -6,6 +6,7 @@
 (def match)
 
 (defn match-variable [var in bindings]
+  ;;(prn (str var " = " in))
   (let [b (bindings var)]
     (cond (nil? b) (assoc bindings var in)
           (= in b) bindings
@@ -49,9 +50,9 @@
     bindings))
 
 (def single-matchers
-     {'?is match-is,
-      '?or match-or,
-      '?and match-and,
+     {'?is match-is
+      '?or match-or
+      '?and match-and
       '?not match-not})
 
 (defn single-pattern? [pat]
@@ -65,9 +66,13 @@
 (defn match
   ([pat exp] (match pat exp {}))
   ([pat exp bindings]
+     ;;(prn (str pat " = " exp " " bindings))
      (cond (= bindings fail) fail
            (variable? pat) (match-variable pat exp bindings)
-           (= pat exp) bindings
+           (and (not (coll? pat))
+                (not (coll? exp))
+                (= pat exp))
+           bindings
            (single-pattern? pat) (single-match pat exp bindings)
            (and (coll? pat) (coll? exp))
            (recur (rest pat) (rest exp)

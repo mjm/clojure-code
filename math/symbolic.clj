@@ -3,33 +3,7 @@
         patmatch
         clojure.contrib.test-is))
 
-(def simp-rules
-     '{(+ x 0) x
-       (+ 0 x) x
-       (+ x x) (* 2 x)
-       (- x 0) x
-       (- 0 x) (- x)
-       (- x x) 0
-       (- (- x)) x
-       (* x 1) x
-       (* 1 x) x
-       (* x 0) 0
-       (* 0 x) 0
-       (* x x) (** x 2)
-       (/ 0 x) 0
-       (/ x 1) x
-       (/ x x) 1
-       (** x 0) 1
-       (** 0 x) 0
-       (** 1 x) 1
-       (** x 1) x
-       (** x -1) (/ 1 x)
-       (* x (/ y x)) y
-       (* (/ y x) x) y
-       (/ (* y x) x) y
-       (/ (* x y) x) y
-       (+ x (- x)) 0
-       (+ x (- y x)) y})
+(load "symbolic_rules")
 
 (defn- can-eval-op?
   [op]
@@ -61,5 +35,11 @@
     exp))
 
 (defmacro math [& body]
-  `(with-vars [x y z m n o p q r s t u v w]
+  `(with-vars ~(map identity '[x y z m n o p q r s t u v w])
      ~@body))
+
+(defn simp [exp]
+  (math (simplify exp)))
+
+(defn subst [exp vals]
+  (math (simplify (substitute exp vals))))
