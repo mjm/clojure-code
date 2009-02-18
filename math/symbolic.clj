@@ -89,6 +89,10 @@
          (cond (or (= 0 x) (= 0 y)) 0
                (= 1 x) y
                (= 1 y) x
+               (and (number? x)
+                    (product? y)
+                    (number? (first-term y)))
+               (* (* x (first-term y)) (second-term y))
                (and (not (number? x)) (number? y)) (* y x)
                (and (number? x) (number? y)) (old* x y)
                :else (list '* x y)))
