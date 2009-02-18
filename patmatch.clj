@@ -1,7 +1,8 @@
 ;;; This is pretty much a straight port from PAIP
 
 (ns patmatch
-  (:use clojure.contrib.test-is))
+  (:use clojure.contrib.test-is
+        clojure.contrib.seq-utils))
 
 (def fail nil)
 (def match)
@@ -66,6 +67,50 @@
       '?and match-and
       '?not match-not})
 
+(with-test
+    (defn position
+      ([val coll]
+         (some (fn [[i e]] (when (= e val) i))
+               (indexed coll)))
+      ([val coll start]
+         (+ start (position val (drop start coll)))))
+  (is (= 2 (position 'x '(a b x c d))))
+  (is (= 2 (position 'x '(x b x c d) 1)))
+  (is (= 0 (position 'x '(x b x c d)))))
+
+(defn first-match-pos [pat in start]
+  (if (and (not (coll? pat)) (not (variable? pat)))
+    (position pat in start)
+    (if (<= start (count in))
+      start)))
+
+(defn segment-match*
+  ([pat in bindings] (segment-match* pat in bindings 0))
+  ([pat in bindings start]
+     (let [[[_ v] & p] pat]
+       (if p
+         (if-let [pos (first-match-pos (first p) in start)]
+           (if-let [b2 (match p (drop pos in)
+                              (match-variable v (take pos in)
+                                              bindings))]
+             b2
+             (recur pat in bindings (inc pos))))
+         (match-variable v in bindings)))))
+
+(defn segment-match+ [pat in bindings]
+  (segment-match* pat in bindings 1))
+
+(defn segment-match? [[[_ v] & pat] in bindings]
+  (or (match (cons v pat) in bindings)
+      (match pat in bindings)))
+
+(def segment-matchers
+     {'?* segment-match*
+      '?+ segment-match+
+      '?? segment-match?
+      ;; '?if match-if
+      })
+
 (defn single-pattern? [pat]
   (and (coll? pat)
        (single-matchers (first pat))))
@@ -74,16 +119,25 @@
   ((single-matchers (first pat))
    (rest pat) in bindings))
 
+(defn segment-pattern? [pat]
+  (and (coll? pat) (coll? (first pat))
+       (symbol? (first (first pat)))
+       (segment-matchers (first (first pat)))))
+
+(defn segment-match [pat in bindings]
+  ((segment-matchers (first (first pat)))
+   pat in bindings))
+
 (defn match
   ([pat exp] (match pat exp {}))
   ([pat exp bindings]
-     ;;(prn (str pat " = " exp " " bindings))
      (cond (= bindings fail) fail
            (variable? pat) (match-variable pat exp bindings)
            (and (not (coll? pat))
                 (not (coll? exp))
                 (= pat exp))
            bindings
+           (segment-pattern? pat) (segment-match pat exp bindings)
            (single-pattern? pat) (single-match pat exp bindings)
            (and (coll? pat) (coll? exp))
            (recur (rest pat) (rest exp)
