@@ -1,7 +1,8 @@
 (ns math.symbolic
   (:refer-clojure :rename {+ old+, * old*})
-  (:use math
-        clojure.contrib.test-is)
+  (:require math)
+  (:refer math :rename {** old**})
+  (:use clojure.contrib.test-is)
   (:require [clojure.contrib.error-kit :as err]))
 
 (with-test
@@ -22,7 +23,7 @@
   (is (not (same-variable? 1 1)))
   (is (not (same-variable? 1 2))))
 
-(def make-sum)
+(def +)
 
 (with-test
     (def first-term second)
@@ -41,34 +42,34 @@
            (= (first val) '+)))
   (is (sum? '(+ 1 2)))
   (is (sum? '(+ x 2)))
-  (is (sum? (make-sum 'x 2)))
+  (is (sum? (+ 'x 2)))
   (is (not (sum? 1)))
   (is (not (sum? 'x))))
 
 (with-test
-    (defn make-sum
+    (defn +
       ([] 0)
       ([x] x)
       ([x y]
-         (cond (and (number? x) (not (number? y))) (make-sum y x)
+         (cond (and (number? x) (not (number? y))) (+ y x)
                (and (sum? x)
                     (number? (second-term x))
-                    (number? y)) (make-sum (first-term x)
-                                           (make-sum (second-term x) y))
+                    (number? y)) (+ (first-term x)
+                                           (+ (second-term x) y))
                (= 0 x) y
                (= 0 y) x
                (and (number? x) (number? y)) (old+ x y)
                :else (list '+ x y)))
       ([x y & more]
-         (reduce make-sum (make-sum x y) more)))
-  (is (= 3 (make-sum 1 2)))
-  (is (= '(+ x 2) (make-sum 'x 2)))
-  (is (= '(+ x 2) (make-sum 2 'x)))
-  (is (= 6 (make-sum 1 2 3)))
-  (is (= '(+ x 4) (make-sum 2 'x 2)))
-  (is (= '(+ x 4) (make-sum 2 2 'x))))
+         (reduce + (+ x y) more)))
+  (is (= 3 (+ 1 2)))
+  (is (= '(+ x 2) (+ 'x 2)))
+  (is (= '(+ x 2) (+ 2 'x)))
+  (is (= 6 (+ 1 2 3)))
+  (is (= '(+ x 4) (+ 2 'x 2)))
+  (is (= '(+ x 4) (+ 2 2 'x))))
 
-(def make-product)
+(def *)
 
 (with-test
     (defn product? [val]
@@ -76,28 +77,28 @@
            (= (first val) '*)))
   (is (product? '(* 2 x)))
   (is (product? '(* 2 3)))
-  (is (product? (make-product 'x 2)))
+  (is (product? (* 'x 2)))
   (is (not (product? 2)))
   (is (not (product? 'x))))
 
 (with-test
-    (defn make-product
+    (defn *
       ([] 1)
       ([x] x)
       ([x y]
          (cond (or (= 0 x) (= 0 y)) 0
                (= 1 x) y
                (= 1 y) x
-               (and (not (number? x)) (number? y)) (make-product y x)
+               (and (not (number? x)) (number? y)) (* y x)
                (and (number? x) (number? y)) (old* x y)
                :else (list '* x y)))
       ([x y & more]
-         (reduce make-product
-                 (make-product x y)
+         (reduce *
+                 (* x y)
                  more)))
-  (is (= 6 (make-product 2 3)))
-  (is (= '(* 2 x) (make-product 2 'x)))
-  (is (= '(* 2 x) (make-product 'x 2))))
+  (is (= 6 (* 2 3)))
+  (is (= '(* 2 x) (* 2 'x)))
+  (is (= '(* 2 x) (* 'x 2))))
 
 (with-test
     (defn exponent? [val]
@@ -121,15 +122,15 @@
   (is (= 'n (exponent '(** 2 n)))))
 
 (with-test
-    (defn make-exponent [b e]
+    (defn ** [b e]
       (cond (= 0 e) 1
             (= 1 e) b
-            (and (number? b) (number? e)) (** b e)
+            (and (number? b) (number? e)) (old** b e)
             :else (list '** b e)))
-  (is (= 1 (make-exponent 'x 0)))
-  (is (= 'x (make-exponent 'x 1)))
-  (is (= 8 (make-exponent 2 3)))
-  (is (= '(** x 2) (make-exponent 'x 2))))
+  (is (= 1 (** 'x 0)))
+  (is (= 'x (** 'x 1)))
+  (is (= 8 (** 2 3)))
+  (is (= '(** x 2) (** 'x 2))))
 
 (err/deferror *derivative-error* []
   [exp]
@@ -140,16 +141,16 @@
 
 (with-test
     (defn deriv-sum [exp var]
-      (make-sum (deriv (first-term exp) var)
+      (+ (deriv (first-term exp) var)
                 (deriv (second-term exp) var)))
   (is (= 1 (deriv-sum '(+ x 3) 'x))))
 
 (with-test
     (defn deriv-product [exp var]
-      (make-sum
-       (make-product (first-term exp)
+      (+
+       (* (first-term exp)
                      (deriv (second-term exp) var))
-       (make-product (second-term exp)
+       (* (second-term exp)
                      (deriv (first-term exp) var))))
   (is (= 'y (deriv-product '(* x y) 'x)))
   (is (= 2 (deriv-product '(* 2 x) 'x))))
