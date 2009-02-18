@@ -159,11 +159,28 @@
   (is (= 2 (deriv-product '(* 2 x) 'x))))
 
 (with-test
+    (defn power-rule? [exp var]
+      (and (exponent? exp)
+           (number? (exponent exp))))
+  (is (power-rule? (** 'x 2) 'x))
+  (is (power-rule? (** 'y 5) 'y))
+  (is (not (power-rule? (** 2 'x) 'x)))
+  (is (not (power-rule? (* 2 (** 'x 2)) 'x))))
+
+(with-test
+    (defn deriv-power [exp var]
+      (* (exponent exp)
+         (** (base exp) (dec (exponent exp)))
+         (deriv (base exp) var)))
+  (is (= '(* 2 x) (deriv-power (** 'x 2) 'x))))
+
+(with-test
     (defn deriv [exp var]
       (cond (number? exp) 0
             (variable? exp) (if (same-variable? exp var) 1 0)
             (sum? exp) (deriv-sum exp var)
             (product? exp) (deriv-product exp var)
+            (power-rule? exp var) (deriv-power exp var) 
             :else (err/raise *derivative-error* exp)))
   (is (= 0 (deriv 2 'x)))
   (is (= 1 (deriv 'x 'x)))
