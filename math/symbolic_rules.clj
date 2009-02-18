@@ -5,17 +5,20 @@
 (def abbrevs
      '{n (?is n number?)
        m (?is m number?)
-       s (?is s not-number?)})
+       s (?is s not-number?)
+       x+ (?+ x)
+       y+ (?+ y)})
 
 (defn fix-rules [rules]
   (into {}
-        (map (fn [r]
-               (vec (map #(expand-abbrevs % abbrevs) r)))
+        (map (fn [[l r]]
+               [(expand-abbrevs l abbrevs) r])
              rules)))
 
 (def simp-rules
      (fix-rules
-      '{(+ x 0) x
+      '{(+ x) x
+        (+ x 0) x
         (+ 0 x) x
         (+ x x) (* 2 x)
         (- x 0) x
@@ -57,8 +60,12 @@
         (+ (log x) (log y)) (log (* x y))
         (- (log x) (log y)) (log (/ x y))
         (+ (** (sin x) 2) (** (cos x) 2)) 1
+        (* n (* m s)) (* (* n m) s)
+        (d n x) 0
         (d x x) 1
         (d (+ u v) x) (+ (d u x) (d v x))
         (d (- u v) x) (- (d u x) (d v x))
         (d (- u) x) (- (d u x))
-        (d (* u v) x) (+ (* u (d v x)) (* v (d u x)))}))
+        (d (* u v) x) (+ (* u (d v x)) (* v (d u x)))
+        (d (** u n) x) (* (* n (** u (- n 1)))
+                          (d u x))}))
