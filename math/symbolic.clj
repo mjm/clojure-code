@@ -147,11 +147,10 @@
 
 (with-test
     (defn deriv-product [exp var]
-      (+
-       (* (first-term exp)
-                     (deriv (second-term exp) var))
-       (* (second-term exp)
-                     (deriv (first-term exp) var))))
+      (+ (* (first-term exp)
+            (deriv (second-term exp) var))
+         (* (second-term exp)
+            (deriv (first-term exp) var))))
   (is (= 'y (deriv-product '(* x y) 'x)))
   (is (= 2 (deriv-product '(* 2 x) 'x))))
 
