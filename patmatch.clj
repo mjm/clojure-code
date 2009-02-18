@@ -1,20 +1,31 @@
 ;;; This is pretty much a straight port from PAIP
 
-(ns patmatch)
+(ns patmatch
+  (:use clojure.contrib.test-is))
 
 (def fail nil)
 (def match)
 
-(defn match-variable [var in bindings]
-  ;;(prn (str var " = " in))
-  (let [b (bindings var)]
-    (cond (nil? b) (assoc bindings var in)
-          (= in b) bindings
-          :else fail)))
+(with-test
+    (defn match-variable [var in bindings]
+      (let [b (bindings var)]
+        (cond (nil? b) (assoc bindings var in)
+              (= in b) bindings
+              :else fail)))
+  (is (= '{?x 1} (match-variable '?x 1 {})))
+  (is (= '{?x 1} (match-variable '?x 1 '{?x 1})))
+  (is (= fail (match-variable '?x 2 '{?x 1})))
+  (is (= '{?x 1 ?y 2} (match-variable '?x 1 '{?y 2}))))
 
-(defn variable? [x]
-  (and (symbol? x)
-       (.startsWith (name x) "?")))
+(with-test
+    (defn variable? [x]
+      (and (symbol? x)
+           (.startsWith (name x) "?")))
+  (is (variable? '?x))
+  (is (variable? '?y))
+  (is (variable? '?whatev))
+  (is (not (variable? 'x)))
+  (is (not (variable? 'whatev))))
 
 (defmacro with-vars [vars & body]
   `(binding [variable? (fn [x#] (some #{x#} '~vars))]
@@ -98,3 +109,5 @@
   (some #(if-let [res (match (first %) exp)]
            (actfn (second %) res))
         rules))
+
+(run-tests)
