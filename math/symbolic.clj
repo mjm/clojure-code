@@ -1,45 +1,171 @@
 (ns math.symbolic
+  (:refer-clojure :rename {+ old+, * old*})
   (:use math
-        patmatch
-        clojure.contrib.test-is))
-
-(load "symbolic_rules")
-
-(defn- can-eval-op?
-  [op]
-  (some #{op} '(+ - * / **)))
-
-(defn- can-eval-args?
-  [args]
-  (every? number? args))
+        clojure.contrib.test-is)
+  (:require [clojure.contrib.error-kit :as err]))
 
 (with-test
-    (defn can-eval?
-      [exp]
-      (and (can-eval-op? (first exp))
-           (can-eval-args? (rest exp))))
-  (is (can-eval? '(+ 1 2)))
-  (is (not (can-eval? '(+ a 3))))
-  (is (not (can-eval? '(+ 3 b))))
-  (is (not (can-eval? '(+ a b)))))
+    (def variable? symbol?)
+  (is (variable? 'x))
+  (is (variable? 'y))
+  (is (not (variable? 1)))
+  (is (not (variable? '(+ 1 2)))))
 
-(defn simplify-exp
+(with-test
+    (defn same-variable? [v1 v2]
+      (and (variable? v1)
+           (variable? v2)
+           (= v1 v2)))
+  (is (same-variable? 'x 'x))
+  (is (same-variable? 'y 'y))
+  (is (not (same-variable? 'x 'y)))
+  (is (not (same-variable? 1 1)))
+  (is (not (same-variable? 1 2))))
+
+(def make-sum)
+
+(with-test
+    (def first-term second)
+  (is (= 2 (first-term '(+ 2 x))))
+  (is (= 'y (first-term '(+ y x)))))
+
+(with-test
+    (defn second-term [exp]
+      (nth exp 2))
+  (is (= 2 (second-term '(+ x 2))))
+  (is (= 'y (second-term '(+ x y)))))
+
+(with-test
+    (defn sum? [val]
+      (and (coll? val)
+           (= (first val) '+)))
+  (is (sum? '(+ 1 2)))
+  (is (sum? '(+ x 2)))
+  (is (sum? (make-sum 'x 2)))
+  (is (not (sum? 1)))
+  (is (not (sum? 'x))))
+
+(with-test
+    (defn make-sum
+      ([] 0)
+      ([x] x)
+      ([x y]
+         (cond (and (number? x) (not (number? y))) (make-sum y x)
+               (and (sum? x)
+                    (number? (second-term x))
+                    (number? y)) (make-sum (first-term x)
+                                           (make-sum (second-term x) y))
+               (= 0 x) y
+               (= 0 y) x
+               (and (number? x) (number? y)) (old+ x y)
+               :else (list '+ x y)))
+      ([x y & more]
+         (reduce make-sum (make-sum x y) more)))
+  (is (= 3 (make-sum 1 2)))
+  (is (= '(+ x 2) (make-sum 'x 2)))
+  (is (= '(+ x 2) (make-sum 2 'x)))
+  (is (= 6 (make-sum 1 2 3)))
+  (is (= '(+ x 4) (make-sum 2 'x 2)))
+  (is (= '(+ x 4) (make-sum 2 2 'x))))
+
+(def make-product)
+
+(with-test
+    (defn product? [val]
+      (and (coll? val)
+           (= (first val) '*)))
+  (is (product? '(* 2 x)))
+  (is (product? '(* 2 3)))
+  (is (product? (make-product 'x 2)))
+  (is (not (product? 2)))
+  (is (not (product? 'x))))
+
+(with-test
+    (defn make-product
+      ([] 1)
+      ([x] x)
+      ([x y]
+         (cond (or (= 0 x) (= 0 y)) 0
+               (= 1 x) y
+               (= 1 y) x
+               (and (not (number? x)) (number? y)) (make-product y x)
+               (and (number? x) (number? y)) (old* x y)
+               :else (list '* x y)))
+      ([x y & more]
+         (reduce make-product
+                 (make-product x y)
+                 more)))
+  (is (= 6 (make-product 2 3)))
+  (is (= '(* 2 x) (make-product 2 'x)))
+  (is (= '(* 2 x) (make-product 'x 2))))
+
+(with-test
+    (defn exponent? [val]
+      (and (coll? val)
+           (= (first val) '**)))
+  (is (exponent? '(** x 2)))
+  (is (exponent? '(** 2 n)))
+  (is (not (exponent? 2)))
+  (is (not (exponent? 'n)))
+  (is (not (exponent? '(+ 1 2))))
+  (is (not (exponent? '(* 1 2)))))
+
+(with-test
+    (def base first-term)
+  (is (= 'x (base '(** x 2))))
+  (is (= 2 (base '(** 2 n)))))
+
+(with-test
+    (def exponent second-term)
+  (is (= 2 (exponent '(** x 2))))
+  (is (= 'n (exponent '(** 2 n)))))
+
+(with-test
+    (defn make-exponent [b e]
+      (cond (= 0 e) 1
+            (= 1 e) b
+            (and (number? b) (number? e)) (** b e)
+            :else (list '** b e)))
+  (is (= 1 (make-exponent 'x 0)))
+  (is (= 'x (make-exponent 'x 1)))
+  (is (= 8 (make-exponent 2 3)))
+  (is (= '(** x 2) (make-exponent 'x 2))))
+
+(err/deferror *derivative-error* []
   [exp]
-  (or (translate-by-rules exp simp-rules #(simplify (substitute % %2)))
-      (if (can-eval? exp) (eval exp)
-          exp)))
+  {:msg (str "Error trying to derive: " exp)
+   :unhandled (err/throw-msg Exception)})
 
-(defn simplify [exp]
-  (if (coll? exp)
-    (simplify-exp (map simplify exp))
-    exp))
+(def deriv)
 
-(defmacro math [& body]
-  `(with-vars ~(map identity '[x y z m n o p q r s t u v w])
-     ~@body))
+(with-test
+    (defn deriv-sum [exp var]
+      (make-sum (deriv (first-term exp) var)
+                (deriv (second-term exp) var)))
+  (is (= 1 (deriv-sum '(+ x 3) 'x))))
 
-(defn simp [exp]
-  (math (simplify exp)))
+(with-test
+    (defn deriv-product [exp var]
+      (make-sum
+       (make-product (first-term exp)
+                     (deriv (second-term exp) var))
+       (make-product (second-term exp)
+                     (deriv (first-term exp) var))))
+  (is (= 'y (deriv-product '(* x y) 'x)))
+  (is (= 2 (deriv-product '(* 2 x) 'x))))
 
-(defn subst [exp vals]
-  (math (simplify (substitute exp vals))))
+(with-test
+    (defn deriv [exp var]
+      (cond (number? exp) 0
+            (variable? exp) (if (same-variable? exp var) 1 0)
+            (sum? exp) (deriv-sum exp var)
+            (product? exp) (deriv-product exp var)
+            :else (err/raise *derivative-error* exp)))
+  (is (= 0 (deriv 2 'x)))
+  (is (= 1 (deriv 'x 'x)))
+  (is (= 0 (deriv 'y 'x)))
+  (is (= 1 (deriv '(+ x 3) 'x)))
+  (is (= 'y (deriv '(* x y) 'x)))
+  (is (= '(+ (* x y) (* (+ x 3) y)) (deriv '(* (* x y) (+ x 3)) 'x))))
+
+(run-tests)
