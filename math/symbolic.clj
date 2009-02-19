@@ -178,14 +178,20 @@
          (deriv (base exp) var)))
   (is (= '(* 2 x) (deriv-power (** 'x 2) 'x))))
 
+(def deriv-rules
+     [(fn [n _] (number? n)) (constantly 0)
+      (fn [v _] (variable? v)) #(if (same-variable? %1 %2) 1 0)
+      (fn [s _] (sum? s)) deriv-sum
+      (fn [p _] (product? p)) deriv-product
+      power-rule? deriv-power
+      (constantly true) (fn [e _] (err/raise *derivative-error* e))])
+
 (with-test
     (defn deriv [exp var]
-      (cond (number? exp) 0
-            (variable? exp) (if (same-variable? exp var) 1 0)
-            (sum? exp) (deriv-sum exp var)
-            (product? exp) (deriv-product exp var)
-            (power-rule? exp var) (deriv-power exp var) 
-            :else (err/raise *derivative-error* exp)))
+      (loop [[r & rules] (partition 2 deriv-rules)]
+        (if ((first r) exp var)
+          ((second r) exp var)
+          (recur rules))))
   (is (= 0 (deriv 2 'x)))
   (is (= 1 (deriv 'x 'x)))
   (is (= 0 (deriv 'y 'x)))
