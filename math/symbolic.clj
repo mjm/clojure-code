@@ -5,6 +5,9 @@
   (:use clojure.contrib.test-is)
   (:require [clojure.contrib.error-kit :as err]))
 
+(defmacro sym [var]
+  `(def ~var '~var))
+
 (with-test
     (def variable? symbol?)
   (is (variable? 'x))
