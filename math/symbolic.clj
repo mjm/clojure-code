@@ -81,6 +81,7 @@
   (is (product? '(* 2 x)))
   (is (product? '(* 2 3)))
   (is (product? (* 'x 2)))
+  (is (not (product? '(+ x 2))))
   (is (not (product? 2)))
   (is (not (product? 'x))))
 
