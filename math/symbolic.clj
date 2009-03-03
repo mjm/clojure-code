@@ -58,11 +58,11 @@
                (and (sum? x)
                     (number? (second-term x))
                     (number? y)) (+ (first-term x)
-                                           (+ (second-term x) y))
-               (= 0 x) y
-               (= 0 y) x
-               (and (number? x) (number? y)) (old+ x y)
-               :else (list '+ x y)))
+                                    (+ (second-term x) y))
+                    (= 0 x) y
+                    (= 0 y) x
+                    (and (number? x) (number? y)) (old+ x y)
+                    :else (list '+ x y)))
       ([x y & more]
          (reduce + (+ x y) more)))
   (is (= 3 (+ 1 2)))
@@ -141,16 +141,16 @@
   (is (= '(** x 2) (** 'x 2))))
 
 (err/deferror *derivative-error* []
-  [exp]
-  {:msg (str "Error trying to derive: " exp)
-   :unhandled (err/throw-msg Exception)})
+              [exp]
+              {:msg (str "Error trying to derive: " exp)
+               :unhandled (err/throw-msg Exception)})
 
 (def deriv)
 
 (with-test
     (defn deriv-sum [exp var]
       (+ (deriv (first-term exp) var)
-                (deriv (second-term exp) var)))
+         (deriv (second-term exp) var)))
   (is (= 1 (deriv-sum '(+ x 3) 'x))))
 
 (with-test
