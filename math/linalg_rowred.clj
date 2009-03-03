@@ -34,6 +34,45 @@
                      (* n (mget m r1 j)))
                   (mget m i j)))))
 
+;;; NEW ROW REDUCTION
+
+(defn partial-pivot
+  "Swaps rows to make the pivot column of the matrix be as large as
+  possible."
+  [A pivot-col]
+  (swap-rows A pivot-col
+             (apply max-key
+                    #(mget A % pivot-col)
+                    (range pivot-col (inc (:rows A))))))
+
+(defn gauss-eliminate-no-partial [A pivot-col]
+  (let [pivot (mget A pivot-col pivot-col)]
+    (if (=? pivot 0) ; No elimination can be done in this column
+      A
+      (let [A* (multiply-row A pivot-col
+                             (/ pivot))] ; Make the pivot 1
+        (reduce #(add-mult %1 (- (mget %1 %2 pivot-col))
+                           pivot-col %2)
+                A*
+                (range (inc pivot-col)
+                       (inc (:rows A*))))))))
+
+(defn gauss-eliminate [A pivot-col]
+  "Performs elimination on a single column. Uses partial pivoting to
+  reduce errors. Should handle zeros just fine."
+  (let [A* (partial-pivot A pivot-col)]
+    (gauss-eliminate-no-partial A* pivot-col)))
+
+(defn gauss [A]
+  (let [n (min (:rows A) (:cols A))
+        r (range 1 (inc n))]
+    (reduce gauss-eliminate A r)))
+
+(defn gauss-no-partial [A]
+  (let [n (min (:rows A) (:cols A))
+        r (range 1 (inc n))]
+    (reduce gauss-eliminate-no-partial A r)))
+
 ;;; ROW REDUCTION
 ;;; Warning: These have big flaws right now.
 ;;; They don't handle zeros in the wrong places.
