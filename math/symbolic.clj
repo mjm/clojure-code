@@ -200,6 +200,7 @@
     (defn ** [b e]
       (cond (= 0 e) 1
             (= 1 e) b
+            (exponent? b) (** (base b) (* (exponent b) e))
             (and (number? b) (number? e)) (old** b e)
             :else (list '** b e)))
   (is (= 1 (** 'x 0)))
