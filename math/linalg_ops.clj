@@ -220,6 +220,59 @@
             r (r-matrix a q)]
         [q r]))
 
+(defn hh-vector
+  "Transforms a vector to a multiple of e1 while preserving length. Used
+  to compute a Householder matrix."
+  [a]
+  (let [val (mget a 1)]
+    ((if (pos? val) add subt)
+     a
+     (apply cvec
+            (magnitude a)
+            (replicate (dec (dim a)) 0)))))
+
+(defn householder
+  "Computes the Householder matrix for a given vector."
+  [a]
+  (let [u (norm (hh-vector a))
+        ut (transpose u)]
+    (subt (id (dim u))
+          (mult 2 u ut))))
+
+(defn- hh-pad
+  "Pads the upper-left of a matrix so that it has the same size as other
+  matrices and preserves the values that already have."
+  [m d]
+  (assert (square? m))
+  (assoc-sub-matrix (id (+ (:rows m) d))
+                    m
+                    (inc d)
+                    (inc d)))
+
+(defn hh-reduce
+  "Use Householder matrices to reduce A to upper triangular. Returns a
+  vector containing the upper triangular matrix R and the sequence of
+  Householder matrices used to get R."
+  [A]
+  (loop [A* A
+         Hs []
+         num 1]
+    (if (or (= num (:rows A*))
+            (= num (:cols A*)))
+      [A* Hs]
+      (let [Asub (sub-matrix A* num num)
+            a (col Asub 1)
+            H* (hh-pad (householder a) (dec num))]
+        (recur (mult H* A*)
+               (conj Hs H*)
+               (inc num))))))
+
+(defn qr-householder
+  "Performs a QR-factorization using Householder matrices. "
+  [A]
+  (let [[R Hs] (hh-reduce A)]
+    [(apply mult Hs) R]))
+
 (defn ls-solve
   "Finds a least squared solution to the equation Ax = b. Uses the QR
   factorization for better computations."

@@ -216,3 +216,25 @@
 (defn zero-vec?
   "Checks if a vector is the zero vector (every entry is zero)."
   [v] (=? 0 v))
+
+(defn sub-matrix
+  "Retrieves the portion of the matrix starting at the given row and
+  column."
+  [m r c]
+  (let [r (dec r)
+        c (dec c)]
+    (gen-matrix (- (:rows m) r)
+                (- (:cols m) c)
+                #(mget m (+ %1 r) (+ %2 c)))))
+
+(defn assoc-sub-matrix
+  "Replaces the portion of the matrix starting at the given row and
+  column with another matrix."
+  [m s r c]
+  (let [r (dec r)
+        c (dec c)]
+    (gen-matrix (:rows m)
+                (:cols m)
+                #(if (and (> %1 r) (> %2 c))
+                   (mget s (- %1 r) (- %2 c))
+                   (mget m %1 %2)))))
