@@ -284,6 +284,18 @@
          (deriv (base exp) var)))
   (is (= '(* 2 x) (deriv-power (** 'x 2) 'x))))
 
+(with-test
+    (defn deriv-trig [exp var]
+      (condp =
+       (first exp)
+       'sin (* (cos (first-term exp))
+               (deriv (first-term exp) var))
+       'cos (- (* (sin (first-term exp))
+                  (deriv (first-term exp) var))))))
+
+(defn pred [f]
+  (fn [x _] (f x)))
+
 (def deriv-rules
      [(fn [n _] (number? n)) (constantly 0)
       (fn [v _] (variable? v)) #(if (same-variable? %1 %2) 1 0)
