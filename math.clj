@@ -36,7 +36,7 @@
 (defn **
   "Raises base to the exp power."
   [base exp]
-  (if (integer? exp)
+  (if (and (integer? exp) (> exp -1))
     (reduce * (replicate exp base))
     (Math/pow base exp)))
 
