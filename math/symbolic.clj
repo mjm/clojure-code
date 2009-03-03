@@ -1,9 +1,13 @@
 (ns math.symbolic
-  (:refer-clojure :rename {+ old+, * old*})
-  (:require math)
-  (:refer math :rename {** old**})
-  (:use clojure.contrib.test-is)
+  (:refer-clojure :rename {+ old+, - old-, * old*}
+                  :exclude [/])
+  (:use [math :rename {** old**}]
+        [patmatch :only [substitute]])
+  (:use clojure.contrib.test-is
+        clojure.contrib.seq-utils)
   (:require [clojure.contrib.error-kit :as err]))
+
+(in-ns 'math.symbolic)
 
 (defmacro sym [var]
   `(def ~var '~var))
@@ -72,6 +76,28 @@
   (is (= '(+ x 4) (+ 2 'x 2)))
   (is (= '(+ x 4) (+ 2 2 'x))))
 
+(def -)
+
+(with-test
+    (defn negated? [val]
+      (and (coll? val)
+           (= (first val) '-)))
+  (is (negated? '(- x)))
+  (is (negated? '(- (+ x 2))))
+  (is (not (negated? -2)))
+  (is (not (negated? 'x))))
+
+(with-test
+    (defn -
+      ([x] (if (number? x) (old- x) (list '- x)))
+      ([x y] (+ x (- y)))
+      ([x y & more]
+         (reduce - (- x y) more)))
+  (is (= '(- x) (- 'x)))
+  (is (= '(+ x (- y)) (- 'x 'y)))
+  (is (= -2 (- 2)))
+  (is (= 0 (- 3 2 1))))
+
 (def *)
 
 (with-test
@@ -107,6 +133,44 @@
   (is (= 6 (* 2 3)))
   (is (= '(* 2 x) (* 2 'x)))
   (is (= '(* 2 x) (* 'x 2))))
+
+(def div)
+
+(with-test
+    (defn quotient? [val]
+      (and (coll? val)
+           (= (first val) '/)))
+  (is (quotient? '(/ 2 x)))
+  (is (quotient? '(/ x 2))))
+
+(with-test
+    (def dividend first-term)
+  (is (= 2 (dividend '(/ 2 x))))
+  (is (= 'x (dividend '(/ x 2)))))
+
+(with-test
+    (def divisor second-term)
+  (is (= 'x (divisor '(/ 2 x))))
+  (is (= 2 (divisor '(/ x 2)))))
+
+(defonce old-div clojure.core//)
+
+(defn div
+  ([x] (div 1 x))
+  ([x y] (cond (= y 0) Double/POSITIVE_INFINITY
+               (= x 0) 0
+               (= y 1) x
+               (= x y) 1
+               (and (number? x) (number? y)) (old-div x y)
+               :else (list '/ x y)))
+  ([x y & more]
+     (reduce div (div x y) more)))
+
+;;; <evil thanks="durka42">
+(defonce ___do-stuff
+  (do (ns-unmap 'math.symbolic '/)
+      (.refer *ns* (symbol nil "/") #'div)))
+;;; </evil>
 
 (with-test
     (defn exponent? [val]
