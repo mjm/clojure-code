@@ -261,6 +261,14 @@
   (is (= 2 (deriv-product '(* 2 x) 'x))))
 
 (with-test
+    (defn deriv-quotient [exp var]
+      (/ (- (* (divisor exp)
+               (deriv (dividend exp) var))
+            (* (dividend exp)
+               (deriv (divisor exp) var)))
+         (** (divisor exp) 2))))
+
+(with-test
     (defn power-rule? [exp var]
       (and (exponent? exp)
            (number? (exponent exp))))
