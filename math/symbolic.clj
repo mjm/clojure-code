@@ -12,6 +12,9 @@
 (defmacro sym [var]
   `(def ~var '~var))
 
+(sym pi)
+(sym e)
+
 (with-test
     (def variable? symbol?)
   (is (variable? 'x))
