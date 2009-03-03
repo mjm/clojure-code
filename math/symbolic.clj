@@ -297,11 +297,13 @@
   (fn [x _] (f x)))
 
 (def deriv-rules
-     [(fn [n _] (number? n)) (constantly 0)
-      (fn [v _] (variable? v)) #(if (same-variable? %1 %2) 1 0)
-      (fn [s _] (sum? s)) deriv-sum
-      (fn [p _] (product? p)) deriv-product
+     [(pred number?) (constantly 0)
+      (pred variable?) #(if (same-variable? %1 %2) 1 0)
+      (pred sum?) deriv-sum
+      (pred product?) deriv-product
+      (pred quotient?) deriv-quotient
       power-rule? deriv-power
+      (pred trigonometric?) deriv-trig
       (constantly true) (fn [e _] (err/raise *derivative-error* e))])
 
 (with-test
