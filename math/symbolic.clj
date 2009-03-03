@@ -208,6 +208,36 @@
   (is (= 8 (** 2 3)))
   (is (= '(** x 2) (** 'x 2))))
 
+(with-test
+    (defn trigonometric? [exp]
+      (and (coll? exp)
+           (includes? '(sin cos)
+                      (first exp))))
+  (is (trigonometric? '(sin x)))
+  (is (trigonometric? '(cos 2))))
+
+(with-test
+    (defn sin [x]
+      (cond (= x 0) 0
+            (number? x) (Math/sin x)
+            :else (list 'sin x)))
+  (is (= 0 (sin 0)))
+  (is (= '(sin x) (sin 'x)))
+  (is (= '(sin (* 2 y)) (sin (* 2 'y)))))
+
+(with-test
+    (defn cos [x]
+      (cond (= x 0) 1
+            (number? x) (Math/cos x)
+            :else (list 'cos x)))
+  (is (= 1 (cos 0)))
+  (is (= '(cos x) (cos 'x)))
+  (is (= '(cos (* 2 y)) (cos (* 2 'y)))))
+
+(with-test
+    (defn tan [x]
+      (/ (sin x) (cos x))))
+
 (err/deferror *derivative-error* []
               [exp]
               {:msg (str "Error trying to derive: " exp)
