@@ -31,11 +31,14 @@
 (defn print-matrix
   "Prints a matrix into columns."
   ([m] (print-matrix m *out*))
-  ([m o] (do-matrix m [i j]
+  ([m o]
+     (.write o "\n")
+     (do-matrix m [i j]
            (.write o (print-matrix-item (mget m i j)))
            (if (and (= j (:cols m))
                     (not= i (:rows m)))
-             (.write o "\n")))))
+             (.write o "\n")))
+     (.write o "\n")))
 
 ;;; This is a disgusting hack to make matrices print special
 (defmethod print-method clojure.lang.PersistentStructMap [o #^java.io.Writer w]
