@@ -317,15 +317,10 @@
             (apply cvec d1))
           (recur m1))))))
 
-(defn eigenvector
-  [m l]
-  ;; (kernel (subt m (mult l (id (:rows m)))))
-  )
-
-(defn eigenvectors
-  "Finds the eigenvectors that correspond to the given eigenvalues of
-  the matrix."
-  [m eigs]
-  (join-cols
-   (map #(eigenvector m %)
-        (:data eigs))))
+;; (defn eigenvectors
+;;   "Finds the eigenvectors that correspond to the given eigenvalues of
+;;   the matrix."
+;;   [m eigs]
+;;   (join-cols
+;;    (map #(eigenvector m %)
+;;         (:data eigs))))
