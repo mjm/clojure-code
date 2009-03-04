@@ -4,7 +4,8 @@
 ;;; These make some of the other more complicated functions a lot
 ;;; easier to deal with.
 
-(ns math)
+(ns math
+  (:use clojure.contrib.math))
 
 (defn math-dispatch
   "Used for multimethod dispatch when working on math data.
@@ -21,9 +22,9 @@
      (vec (map math-dispatch (cons a args)))))
 
 ;; Wrote our own because Math/abs doesn't work with Ratios
-(defn abs
-  "Returns the absolute value of the given number."
-  [n] (if (< n 0) (- n) n))
+;; (defn abs
+;;   "Returns the absolute value of the given number."
+;;   [n] (if (< n 0) (- n) n))
 
 (defn avg
   "Returns the average of the given numbers."

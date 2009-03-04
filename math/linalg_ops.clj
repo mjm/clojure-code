@@ -165,7 +165,7 @@
 (defn magnitude
   "Returns the length of the vector."
   [v]
-  (Math/sqrt (reduce + (map #(* % %) (:data v)))))
+  (sqrt (reduce + (map #(* % %) (:data v)))))
 
 (defn norm
   "Normalizes the vector by dividing by the magnitude of the vector.
