@@ -162,6 +162,13 @@
     (is (= 3 (mget m 1 2)))
     (is (= 5 (mget m 2 3)))))
 
+(defn massoc [m r c val]
+  (gen-matrix (:rows m)
+              (:cols m)
+              #(if (and (= r %) (= c %2))
+                 val
+                 (mget m % %2))))
+
 (with-test
     (defn mat?
       "Is this a matrix and not a vector?"
@@ -238,3 +245,43 @@
                 #(if (and (> %1 r) (> %2 c))
                    (mget s (- %1 r) (- %2 c))
                    (mget m %1 %2)))))
+
+(defn augment
+  "Puts two matrices side-by-side in a new matrix."
+  [m1 m2]
+  (assert (= (:rows m1) (:rows m2)))
+  (gen-matrix (:rows m1)
+              (+ (:cols m1) (:cols m2))
+              #(if (> %2 (:cols m1))
+                 (mget m2 %1 (- %2 (:cols m1)))
+                 (mget m1 %1 %2))))
+
+(with-test
+    (defn transpose
+      "Transpose the rows and columns of the matrix."
+      [m]
+      (gen-matrix (:cols m)
+                  (:rows m)
+                  #(mget m %2 %1)))
+  (let [m (matr 2 3 (range 6))
+        t (transpose m)]
+    (is (= [3 2] (dim t)))
+    (is (= [0 3 1 4 2 5] (:data t)))))
+
+(with-test
+    (defn id
+      "Gives an identity matrix with n rows and n columns."
+      [n] (gen-matrix n n #(if (= %1 %2) 1 0)))
+  (is (= (id 1) (matr 1 1 [1])))
+  (is (= (id 2) (matr 2 2 [1 0 0 1])))
+  (is (= (id 3) (matr 3 3 [1 0 0 0 1 0 0 0 1]))))
+
+(defn zero
+  "Gives a matrix with m rows and n columns filled with zeroes."
+  ([m] (zero m m))
+  ([m n] (gen-matrix m n (constantly 0))))
+
+(defn magnitude
+  "Returns the length of the vector."
+  [v]
+  (sqrt (reduce + (map #(* % %) (:data v)))))

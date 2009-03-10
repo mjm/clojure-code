@@ -26,18 +26,6 @@
 (in-ns 'math.linalg)
 
 (with-test
-    (defn transpose
-      "Transpose the rows and columns of the matrix."
-      [m]
-      (gen-matrix (:cols m)
-                  (:rows m)
-                  #(mget m %2 %1)))
-  (let [m (matr 2 3 (range 6))
-        t (transpose m)]
-    (is (= [3 2] (dim t)))
-    (is (= [0 3 1 4 2 5] (:data t)))))
-
-(with-test
     (defn dot
       "Take the dot product of two vectors."
       [v1 v2]
@@ -56,19 +44,6 @@
                  (rvec 1 2 3))))
   (is (= 10 (dot (cvec 3 2 1)
                  (cvec 1 2 3)))))
-
-(with-test
-    (defn id
-      "Gives an identity matrix with n rows and n columns."
-      [n] (gen-matrix n n #(if (= %1 %2) 1 0)))
-  (is (= (id 1) (matr 1 1 [1])))
-  (is (= (id 2) (matr 2 2 [1 0 0 1])))
-  (is (= (id 3) (matr 3 3 [1 0 0 0 1 0 0 0 1]))))
-
-(defn zero
-  "Gives a matrix with m rows and n columns filled with zeroes."
-  ([m] (zero m m))
-  ([m n] (gen-matrix m n (constantly 0))))
 
 (defmulti det
   "Take the determinant of a matrix."
@@ -145,28 +120,6 @@
     (mult (/ 1 invert)
           (adjoint m))))
 
-(defn augment
-  "Puts two matrices side-by-side in a new matrix."
-  [m1 m2]
-  (assert (= (:rows m1) (:rows m2)))
-  (gen-matrix (:rows m1)
-              (+ (:cols m1) (:cols m2))
-              #(if (> %2 (:cols m1))
-                 (mget m2 %1 (- %2 (:cols m1)))
-                 (mget m1 %1 %2))))
-
-(defn solve
-  "Solves an equation of the form Ax = b, where A is a matrix and b is
-  a column vector."
-  [a b]
-  (let [sol (rref (augment a b))]
-    (col sol (:cols sol))))
-
-(defn magnitude
-  "Returns the length of the vector."
-  [v]
-  (sqrt (reduce + (map #(* % %) (:data v)))))
-
 (defn norm
   "Normalizes the vector by dividing by the magnitude of the vector.
   Should yield a unit vector with the same direction as the original
@@ -177,145 +130,69 @@
       v
       (mult (/ (magnitude v)) v))))
 
-(defn in-basis
-  "Takes a coordinate vector and writes it in terms of the given basis."
-  [v bas]
-  (solve (join-cols bas) v))
+;; (defn solve
+;;   "Solves an equation of the form Ax = b, where A is a matrix and b is
+;;   a column vector."
+;;   [a b]
+;;   (let [sol (rref (augment a b))]
+;;     (col sol (:cols sol))))
 
-(defn change-basis
-  "Produces a matrix for a transformation that will take a vector in the
-  in basis and produce the same vector written in the out basis."
-  [out in]
-  (join-cols (map #(in-basis % out) in)))
+;; (defn in-basis
+;;   "Takes a coordinate vector and writes it in terms of the given basis."
+;;   [v bas]
+;;   (solve (join-cols bas) v))
 
-(defn orthonormal-basis
-  "Returns a sequence of column vectors that form an orthonormal basis
-  for the image of the given matrix. Uses the Gram-Schmidt procedure to
-  produce the basis."
-  [m]
-  (reduce (fn [vecs v]
-            (let [u (norm
-                     (apply subt
-                            v
-                            (map #(mult (dot v %) %) vecs)))]
-              (if (zero-vec? u)
-                vecs
-                (conj vecs u))))
-          []
-          (cols m)))
+;; (defn change-basis
+;;   "Produces a matrix for a transformation that will take a vector in the
+;;   in basis and produce the same vector written in the out basis."
+;;   [out in]
+;;   (join-cols (map #(in-basis % out) in)))
 
-(defn q-matrix
-  "Returns a matrix whose columns are the vectors of an orthonormal
-  basis for the image of the matrix."
-  [m] (reduce augment (orthonormal-basis m)))
+;; (def solve)
 
-(defn r-matrix
-  "Returns a matrix that, when multiplied with the Q matrix, produces A"
-  [a q] (mult (transpose q) a))
+;; (defn ls-solve
+;;   "Finds a least squared solution to the equation Ax = b. Uses the QR
+;;   factorization for better computations."
+;;   [a b]
+;;   (let [[q r] (qr a)]
+;;     (solve r (mult (transpose q) b))))
 
-(defn qr
-  "Returns a vector with both the Q and R matrices for the given
-  matrix."
-  [a] (let [q (q-matrix a)
-            r (r-matrix a q)]
-        [q r]))
+;; (defn- make-poly-matrix
+;;   "Creates the matrix used in solving a polynomial regression."
+;;   [order xs]
+;;   (matr (count xs)
+;;         (inc order)
+;;         (apply concat
+;;                (map (fn [x]
+;;                       (map (partial ** x)
+;;                            (range order -1 -1)))
+;;                     xs))))
 
-(defn hh-vector
-  "Transforms a vector to a multiple of e1 while preserving length. Used
-  to compute a Householder matrix."
-  [a]
-  (let [val (mget a 1)]
-    ((if (pos? val) add subt)
-     a
-     (apply cvec
-            (magnitude a)
-            (replicate (dec (dim a)) 0)))))
+;; (defn poly-regression
+;;   "Finds a polynomial regression of given order on the data points."
+;;   [order points]
+;;   (ls-solve (make-poly-matrix order
+;;                               (map first points))
+;;             (apply cvec (map second points))))
 
-(defn householder
-  "Computes the Householder matrix for a given vector."
-  [a]
-  (let [u (norm (hh-vector a))
-        ut (transpose u)]
-    (subt (id (dim u))
-          (mult 2 u ut))))
+;; (def linear-regression (partial poly-regression 1))
 
-(defn- hh-pad
-  "Pads the upper-left of a matrix so that it has the same size as other
-  matrices and preserves the values that already have."
-  [m d]
-  (assert (square? m))
-  (assoc-sub-matrix (id (+ (:rows m) d))
-                    m
-                    (inc d)
-                    (inc d)))
-
-(defn hh-reduce
-  "Use Householder matrices to reduce A to upper triangular. Returns a
-  vector containing the upper triangular matrix R and the sequence of
-  Householder matrices used to get R."
-  [A]
-  (loop [A* A
-         Hs []
-         num 1]
-    (if (or (= num (:rows A*))
-            (= num (:cols A*)))
-      [A* Hs]
-      (let [Asub (sub-matrix A* num num)
-            a (col Asub 1)
-            H* (hh-pad (householder a) (dec num))]
-        (recur (mult H* A*)
-               (conj Hs H*)
-               (inc num))))))
-
-(defn qr-householder
-  "Performs a QR-factorization using Householder matrices. "
-  [A]
-  (let [[R Hs] (hh-reduce A)]
-    [(apply mult Hs) R]))
-
-(defn ls-solve
-  "Finds a least squared solution to the equation Ax = b. Uses the QR
-  factorization for better computations."
-  [a b]
-  (let [[q r] (qr a)]
-    (solve r (mult (transpose q) b))))
-
-(defn- make-poly-matrix
-  "Creates the matrix used in solving a polynomial regression."
-  [order xs]
-  (matr (count xs)
-        (inc order)
-        (apply concat
-               (map (fn [x]
-                      (map (partial ** x)
-                           (range order -1 -1)))
-                    xs))))
-
-(defn poly-regression
-  "Finds a polynomial regression of given order on the data points."
-  [order points]
-  (ls-solve (make-poly-matrix order
-                              (map first points))
-            (apply cvec (map second points))))
-
-(def linear-regression (partial poly-regression 1))
-
-(defn eigenvalues
-  "Finds a column vector of the eigenvalues of the matrix. Uses the QR
-  method."
-  [m]
-  (let [z? (=? 0 (det m))]
-    (loop [m m]
-      (let [[q r] (qr m)
-            m1 (mult r q)
-            d0 (diag m)
-            d1 (diag m1)]
-        (if (every? (fn [[a b]] (=? a b))
-                    (zipmap d0 d1))
-          (if z?
-            (apply cvec 0 d1)
-            (apply cvec d1))
-          (recur m1))))))
+;; (defn eigenvalues
+;;   "Finds a column vector of the eigenvalues of the matrix. Uses the QR
+;;   method."
+;;   [m]
+;;   (let [z? (=? 0 (det m))]
+;;     (loop [m m]
+;;       (let [[q r] (qr m)
+;;             m1 (mult r q)
+;;             d0 (diag m)
+;;             d1 (diag m1)]
+;;         (if (every? (fn [[a b]] (=? a b))
+;;                     (zipmap d0 d1))
+;;           (if z?
+;;             (apply cvec 0 d1)
+;;             (apply cvec d1))
+;;           (recur m1))))))
 
 ;; (defn eigenvectors
 ;;   "Finds the eigenvectors that correspond to the given eigenvalues of
