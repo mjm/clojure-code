@@ -75,7 +75,7 @@
   #^{:doc "Multiplies two numbers, matrices, etc."}
   times math-dispatch)
 
-(def dot) ; This is defined in linalg_ops
+(declare dot) ; This is defined in linalg_ops
 
 (defmethod times [::Matrix ::Matrix] [m1 m2]
   (assert (= (:cols m1) (:rows m2)))
