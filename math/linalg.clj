@@ -1,6 +1,7 @@
 (ns math.linalg
   (:use math
         clojure.contrib.math
+        clojure.contrib.def
         clojure.contrib.test-is))
 
 (load "linalg_matrix")                  ; Matrix and vector definition
