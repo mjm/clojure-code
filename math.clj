@@ -21,11 +21,6 @@
   ([a & args]
      (vec (map math-dispatch (cons a args)))))
 
-;; Wrote our own because Math/abs doesn't work with Ratios
-;; (defn abs
-;;   "Returns the absolute value of the given number."
-;;   [n] (if (< n 0) (- n) n))
-
 (defn avg
   "Returns the average of the given numbers."
   [& nums]
@@ -52,21 +47,3 @@
 
 (defmethod =? [Number Number] [n1 n2]
   (< (abs (- n1 n2)) close-enough-delta))
-
-;; This shit is crappy! Real ugly results for what should be integers.
-;; Idea: use =? to check if it really is close enough to a rounded
-;; answer. If so, do the rounding and return the integer.
-
-;; (defn- is-valid? [guess n]
-;;   (< (abs (- (** guess 2) n))
-;;      0.000000001))
-
-;; (defn- improve [guess n]
-;;   (avg guess (/ n guess)))
-
-;; (defn sqrt [num]
-;;   (loop [guess 1
-;;          n num]
-;;     (if (is-valid? guess n)
-;;       guess
-;;       (recur (improve guess n) n))))

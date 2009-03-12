@@ -5,7 +5,6 @@
 
 (load "linalg_matrix")                  ; Matrix and vector definition
 (load "linalg_arith")                   ; Matrix arithmetic
-(load "linalg_rowred")                  ; Row-reduction
 (load "linalg_solve")                   ; Solving systems of equations
 (load "linalg_ops")                     ; Matrix and vector operations
 (load "linalg_xform")                   ; Linear transformations
