@@ -127,9 +127,7 @@
                      (apply subt
                             v
                             (map #(mult (dot v %) %) vecs)))]
-              (if (zero-vec? u)
-                vecs
-                (conj vecs u))))
+              (conj vecs u)))
           []
           (cols m)))
 
