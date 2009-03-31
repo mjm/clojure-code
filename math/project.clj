@@ -3,7 +3,11 @@
         clojure.contrib.math
         zutil.csv))
 
-(defn mag [A]
+(defn mag
+  "Finds the 'magnitude' of a matrix, which is the entry of the matrix
+  that has the largest absolute value. Used to compute errors in
+  calculations"
+  [A]
   (apply max (map abs (:data A))))
 
 ;; PART 1 - QR Decomposition
@@ -17,15 +21,23 @@
 ;; matrices are well-conditioned, while the Gram-Schmidt process as
 ;; implemented is ill-conditioned.
 
-(defn part1-input [n]
+(defn part1-input
+  "Generates the input matrix for part 1 of the project."
+  [n]
   (gen-matrix n n
               #(/ (+ %1 %2 -1))))
 
-(defn q-quality [Q]
+(defn q-quality
+  "Checks the quality of the Q matrix by seeing how close Q^t*Q is to
+  the identity matrix."
+  [Q]
   (mag (subt (mult (transpose Q) Q)
              (id (:rows Q)))))
 
-(defn qr-quality [A Q R]
+(defn qr-quality
+  "Checks the quality of the entire decomposition by seeing how close
+  QR is to A."
+  [A Q R]
   (mag (subt (mult Q R) A)))
 
 (defn part1 []
