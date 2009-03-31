@@ -81,12 +81,13 @@
 (defn back-substitute [A]
   "Clear the upper portion of the matrix using row operations."
   (let [n (min (:rows A) (:cols A))
-        r (range n 1 -1)]
+        r (range n 0 -1)]
     (reduce (fn [A pivot-col]
               (let [pivot (mget A pivot-col pivot-col)]
                 (if (=? pivot 0)
                   A
-                  (eliminate-column A pivot-col
+                  (eliminate-column (multiply-row A pivot-col (/ pivot))
+                                    pivot-col
                                     (range (dec pivot-col) 0 -1)))))
             A r)))
 
@@ -201,17 +202,27 @@
   (let [[R Hs] (hh-reduce A)]
     [(apply mult Hs) R]))
 
+(defn solve-qr [[Q R] b]
+  (let [A (augment R (mult (transpose Q) b))]
+    (col (back-substitute A) (:cols A))))
+
+(def max-iters 100000)
+
 (defn iter-solve
   "Creates a function that will perform an iterative method for solving
   A x = b. Uses an iteration function that will transform an x vector
   into a better approximation."
   [iter]
   (fn [A b]
-    (loop [x (zero (:rows b) (:cols b))]
-      (let [x1 (iter A b x)]
-        (if (=? x x1)
-          x1
-          (recur x1))))))
+    (loop [x (zero (:rows b) (:cols b))
+           iters 0]
+      (if (> iters max-iters)
+        x
+        (let [x1 (iter A b x)]
+          ; (prn iters)
+          (if (=? x x1)
+            x1
+            (recur x1 (inc iters))))))))
 
 (defn- iter-sigma
   "Finds the sigma value used in a single row iteration of one of the
