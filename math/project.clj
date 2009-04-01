@@ -40,7 +40,10 @@
   [A Q R]
   (mag (subt (mult Q R) A)))
 
-(defn part1 []
+(defn part1
+  "Run part 1 of the project. Tests each matrix size and generates a
+  sequence of data that can be parsed for output."
+  []
   (for [n (range 3 21)]
     (let [A (part1-input n)
           [Qg Rg] (qr-gram-schmidt A)
@@ -56,7 +59,10 @@
                      :Q-quality (q-quality Qh)
                      :QR-quality (qr-quality A Qh Rh)}})))
 
-(defn part1-output [p1]
+(defn part1-output
+  "Creates the output from part 1 that will written to a file and
+  plotted"
+  [p1]
   (for [data p1]
     [(data :n)
      ((data :gram-schmidt) :Q-quality)
@@ -66,13 +72,16 @@
 
 ;; PART 2 - Solving Ax = b
 
-(defn part2-input [n]
+(defn part2-input
+  "Generate an input matrix and vector to solve the equation."
+  [n]
   [(part1-input n)
    (gen-matrix n 1
                (fn [_ __]
                  (expt 0.1 (/ n 3))))])
 
 (defn part2
+  "Run the various solving algorithms on the part 2 matrices."
   ([]
      (for [n (range 3 21)]
        (part2 n)))
