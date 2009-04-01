@@ -88,6 +88,7 @@
   ([n]
      (let [[A b] (part2-input n)]
        {:n n
+        :input [A b]
         :gauss (gauss A b)
         :gauss-partial (gauss-partial A b)
         :qr-gram-schmidt (solve-qr (qr-gram-schmidt A) b)
