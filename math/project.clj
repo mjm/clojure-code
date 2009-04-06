@@ -93,7 +93,7 @@
         :gauss-partial (gauss-partial A b)
         :qr-gram-schmidt (solve-qr (qr-gram-schmidt A) b)
         :qr-householder (solve-qr (qr-householder A) b)
-        :jacobi (jacobi A b)
+        :jacobi nil ;; (jacobi A b)
         :gauss-seidel (gauss-seidel A b)})))
 
 (defn part3-input-row [n i random]
