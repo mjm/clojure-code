@@ -96,6 +96,22 @@
         :jacobi nil ;; (jacobi A b)
         :gauss-seidel (gauss-seidel A b)})))
 
+(defn solve-error [A x b]
+  (mag (subt (mult A x) b)))
+
+(defn part2-output
+  [p2]
+  (for [data p2]
+    (let [[A b] (data :input)]
+      (vec (cons (data :n)
+                 (map #(solve-error A (data %1) b)
+                      [:gauss
+                       :gauss-partial
+                       :qr-gram-schmidt
+                       :qr-householder
+                       ; :jacobi
+                       :gauss-seidel]))))))
+
 (defn part3-input-row [n i random]
   (let [[r vals]
         (loop [j (dec n)
@@ -149,9 +165,6 @@
         :qr-householder (runtime (solve-qr (qr-householder A) b))
         :jacobi (runtime (jacobi A b))
         :gauss-seidel (runtime (gauss-seidel A b))})))
-
-(defn part3-error [A x b]
-  (mag (subt (mult A x) b)))
 
 (defn part3-output [p3]
   (for [data p3]
